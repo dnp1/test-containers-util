@@ -2,6 +2,11 @@
 name = "test-containers-util"
 version = "0.1.0"
 edition = "2024"
+description = "Ergonomic, reusable Testcontainers helpers for integration tests (PostgreSQL, Redis, Valkey, AWS Moto)"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/YOUR_GITHUB_USERNAME/test-containers-util"
+keywords = ["testcontainers", "testing", "postgres", "redis", "docker"]
+categories = ["development-tools::testing"]
 
 [dependencies]
 tokio = "1.50.0"
