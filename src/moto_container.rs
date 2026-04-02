@@ -12,9 +12,27 @@ static AWS_CONFIG: LazyLock<Mutex<HashMap<String, &'static OnceCell<SdkConfig>>>
 
 const MOTO_PORT: u16 = 5000;
 
-/// Start container if necessary then return SdkConfig
+/// Start a Moto mock server (if not already running) and return an `SdkConfig`
+/// pointing at it.
 ///
+/// The container is started once per `container_name` and reused for all
+/// subsequent calls with the same name. The returned config uses static
+/// `"testing"` credentials and the `us-east-1` region — you may override
+/// these with your own `aws_config` builder if needed.
 ///
+/// # Example
+///
+/// ```rust,ignore
+/// use test_containers_util::moto_container::get_aws_config;
+/// use aws_sdk_s3::Client as S3Client;
+///
+/// #[tokio::test]
+/// async fn my_aws_test() {
+///     let config = get_aws_config("my-moto").await;
+///     let s3 = S3Client::new(&config);
+///     s3.create_bucket().bucket("my-bucket").send().await.unwrap();
+/// }
+/// ```
 pub async fn get_aws_config(container_name: &str) -> SdkConfig {
     let cell = {
         let mut map = AWS_CONFIG.lock().unwrap();
@@ -35,6 +53,10 @@ pub async fn get_aws_config(container_name: &str) -> SdkConfig {
     .clone()
 }
 
+/// Start (or re-attach to) the Moto container with the given name.
+///
+/// Returns the live `ContainerAsync` handle. Prefer [`get_aws_config`] unless
+/// you need direct access to the container (e.g., to stop it in tests).
 pub async fn get_container(container_name: &str) -> ContainerAsync<GenericImage> {
     let container = GenericImage::new("motoserver/moto", "5.1.22")
         .with_wait_for(WaitFor::message_on_either_std("Running on all addresses"))

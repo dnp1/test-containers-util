@@ -1,3 +1,51 @@
+//! # test-containers-util
+//!
+//! Ergonomic, reusable [Testcontainers](https://github.com/testcontainers/testcontainers-rs)
+//! helpers for integration tests in Rust.
+//!
+//! Each helper starts the Docker container **once per named instance** and reuses
+//! it across all tests in the same process. Database isolation is achieved
+//! automatically:
+//!
+//! - **PostgreSQL** – a randomly-named database is created per test and deleted on drop.
+//! - **Redis / Valkey** – one of 16 logical database indices is acquired per test
+//!   and released on drop.
+//!
+//! ## Features
+//!
+//! Enable only the features you need in your `Cargo.toml`:
+//!
+//! | Feature     | Description |
+//! |-------------|-------------|
+//! | `postgres`  | Bare PostgreSQL container (DSN only) |
+//! | `pg-diesel` | PostgreSQL + Diesel async ORM with migrations and bb8 pool |
+//! | `pg-sqlx`   | PostgreSQL + SQLx async driver with migrations |
+//! | `bb8`       | BB8 connection pool (combine with `valkey` or `redis`) |
+//! | `valkey`    | Valkey container with connection manager / bb8 pool |
+//! | `redis`     | Redis container with connection manager / bb8 pool |
+//! | `moto`      | AWS Moto mock server (S3, SNS, SQS, …) |
+//!
+//! ## Quick start
+//!
+//! ```toml
+//! [dev-dependencies]
+//! test-containers-util = { version = "0.1", features = ["pg-diesel"] }
+//! ```
+//!
+//! ```rust,ignore
+//! use diesel_migrations::{embed_migrations, EmbeddedMigrations};
+//! use test_containers_util::diesel_pg::PostgresTestDb;
+//!
+//! const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
+//!
+//! #[tokio::test(flavor = "multi_thread")]
+//! async fn my_test() {
+//!     let db = PostgresTestDb::create("my-container", MIGRATIONS, None, None).await;
+//!     let pool = db.pool();
+//!     // … use pool …
+//! }
+//! ```
+
 #[cfg(any(test, feature = "pg-diesel"))]
 mod diesel_pg;
 

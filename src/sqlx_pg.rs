@@ -26,6 +26,29 @@ fn semaphore_for(container_name: &str) -> Arc<Semaphore> {
         .clone()
 }
 
+/// An isolated PostgreSQL test database backed by SQLx.
+///
+/// Each instance creates a uniquely-named database inside the shared container,
+/// runs your migrations, and provides a `PgPool` scoped to that database.
+/// When the value is dropped the database is deleted automatically.
+///
+/// Up to [`MAX_CONCURRENT_DBS`] instances can be alive simultaneously per
+/// named container (semaphore-guarded), keeping total connections manageable.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use test_containers_util::sqlx_pg::PostgresTestDb;
+///
+/// static MIGRATIONS: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
+///
+/// #[tokio::test(flavor = "multi_thread")]
+/// async fn my_test() {
+///     let db = PostgresTestDb::create("my-pg", &MIGRATIONS, None, None).await;
+///     let pool = db.pool();
+///     // … use pool …
+/// } // `db` dropped → database deleted
+/// ```
 pub struct PostgresTestDb {
     default_db_dsn: String,
     tests_dsn: String,
@@ -35,6 +58,15 @@ pub struct PostgresTestDb {
 }
 
 impl PostgresTestDb {
+    /// Create an isolated test database inside the shared container.
+    ///
+    /// - `container_name` – Docker container name; the container is started and
+    ///   cached on the first call with this name.
+    /// - `migrator` – SQLx migrator to run against the new database.
+    /// - `schema_name` – if `Some`, the schema is created and every connection
+    ///   from the pool will set `search_path` to that schema.
+    /// - `options` – override the Docker image tag or container command; `None`
+    ///   uses the defaults from [`postgres_container::default_cmd`].
     pub async fn create(
         container_name: &str,
         migrator: &Migrator,
@@ -99,10 +131,12 @@ impl PostgresTestDb {
         }
     }
 
+    /// Returns a cloned handle to the SQLx `PgPool` for this test database.
     pub fn pool(&self) -> PgPool {
         self.pool.clone()
     }
 
+    /// Returns the DSN (connection string) for this test database.
     pub fn dsn(&self) -> &str {
         &self.tests_dsn
     }

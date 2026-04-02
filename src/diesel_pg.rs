@@ -56,6 +56,30 @@ async fn run_migrations(
     .expect("Error running migrations");
 }
 
+/// An isolated PostgreSQL test database backed by Diesel async.
+///
+/// Each instance creates a uniquely-named database inside the shared container,
+/// runs your migrations, and provides a bb8 connection pool scoped to that
+/// database. When the value is dropped the database is deleted automatically.
+///
+/// Up to [`MAX_CONCURRENT_DBS`] instances can be alive simultaneously per
+/// named container (semaphore-guarded), keeping total connections manageable.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use diesel_migrations::{embed_migrations, EmbeddedMigrations};
+/// use test_containers_util::diesel_pg::PostgresTestDb;
+///
+/// const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
+///
+/// #[tokio::test(flavor = "multi_thread")]
+/// async fn my_test() {
+///     let db = PostgresTestDb::create("my-pg", MIGRATIONS, None, None).await;
+///     let pool = db.pool();
+///     // … use pool …
+/// } // `db` dropped → database deleted
+/// ```
 pub struct PostgresTestDb {
     default_db_dsn: String,
     tests_dsn: String,
@@ -65,6 +89,15 @@ pub struct PostgresTestDb {
 }
 
 impl PostgresTestDb {
+    /// Create an isolated test database inside the shared container.
+    ///
+    /// - `container_name` – Docker container name; the container is started and
+    ///   cached on the first call with this name.
+    /// - `migrations` – embedded migrations to run against the new database.
+    /// - `schema_name` – if `Some`, the schema is created and set as the
+    ///   default `search_path` before running migrations.
+    /// - `options` – override the Docker image tag or container command; `None`
+    ///   uses the defaults from [`postgres_container::default_cmd`].
     pub async fn create(
         container_name: &str,
         migrations: EmbeddedMigrations,
@@ -115,10 +148,12 @@ impl PostgresTestDb {
         }
     }
 
+    /// Returns a cloned handle to the bb8 connection pool for this test database.
     pub fn pool(&self) -> Pool<AsyncPgConnection> {
         self.pool.clone()
     }
 
+    /// Returns the DSN (connection string) for this test database.
     pub fn dsn(&self) -> &str {
         &self.tests_dsn
     }

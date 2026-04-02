@@ -13,6 +13,10 @@ static POSTGRES_DSN_BY_CONTAINER: LazyLock<Mutex<HashMap<String, &'static OnceCe
 
 const PG_PORT: u16 = 5432;
 
+/// Returns the default PostgreSQL command-line arguments used by the test container.
+///
+/// The defaults are tuned for fast test execution: `fsync` and `synchronous_commit`
+/// are disabled, and memory settings are kept low to reduce overhead.
 pub fn default_cmd() -> Vec<&'static str> {
     vec![
         "-c",
@@ -30,10 +34,21 @@ pub fn default_cmd() -> Vec<&'static str> {
     ]
 }
 
-/// Returns the DSN for the shared test Postgres container.
+/// Returns the DSN for the shared test PostgreSQL container, starting it if necessary.
 ///
-/// On the first call within a process the function checks whether a container
-/// named as container_name input
+/// Containers are keyed by `container_name`. The first call starts the container
+/// and caches its DSN; subsequent calls return the cached value immediately.
+/// The returned DSN has the form `postgres://postgres:postgres@127.0.0.1:<port>/postgres`.
+///
+/// Pass `options` to override the Docker image tag or container command.
+/// When `None` is given, [`default_cmd`] is used with the `18-alpine` tag.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// let dsn = get_postgres_dsn("my-pg", None).await;
+/// // → "postgres://postgres:postgres@127.0.0.1:54321/postgres"
+/// ```
 pub async fn get_postgres_dsn(container_name: &str, options: Option<Options>) -> String {
     let cell = {
         let mut map = POSTGRES_DSN_BY_CONTAINER.lock().unwrap();
