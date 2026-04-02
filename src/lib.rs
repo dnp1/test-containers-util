@@ -5,12 +5,24 @@ mod moto_container;
 #[cfg(any(test, feature = "postgres", feature = "pg-diesel"))]
 mod postgres_container;
 
-mod tcp_util;
-
-
-// mod redis_valkey_helper;
-#[cfg(any(test, feature = "moto"))]
-mod valkey_container;
-#[cfg(any(test, feature = "moto"))]
+mod options;
+#[cfg(any(test, feature = "moto", feature = "redis"))]
 mod redis_container;
+#[cfg(any(test, feature = "valkey", feature = "redis"))]
+mod redis_valkey_connection_manager;
+
+#[cfg(any(test, feature = "valkey", feature = "redis"))]
+mod redis_valkey_registry;
+#[cfg(any(test, feature = "valkey"))]
+mod valkey_container;
+
+#[cfg(any(
+    test,
+    all(feature = "valkey", feature = "bb8"),
+    all(feature = "redis", feature = "bb8")
+))]
+mod valkey_redis_bb8;
+
+pub use options::Options;
+
 // mod valkey_pool;
