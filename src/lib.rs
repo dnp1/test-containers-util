@@ -3,7 +3,7 @@ mod diesel_pg;
 
 #[cfg(any(test, feature = "moto"))]
 mod moto_container;
-#[cfg(any(test, feature = "postgres", feature = "pg-diesel"))]
+#[cfg(any(test, feature = "postgres", feature = "pg-diesel", feature = "pg-sqlx"))]
 mod postgres_container;
 
 mod options;
@@ -24,8 +24,9 @@ mod valkey_container;
 ))]
 mod valkey_redis_bb8;
 
-#[cfg(any(test, feature = "pg-diesel"))]
+#[cfg(any(test, feature = "pg-diesel", feature = "pg-sqlx"))]
 mod rand;
+#[cfg(any(test, feature = "pg-sqlx"))]
 mod sqlx_pg;
 
 pub use options::Options;
