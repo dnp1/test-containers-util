@@ -4,3 +4,60 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+tokio = "1.50.0"
+testcontainers = { version = "^0.27.2", features = ["reusable-containers", "host-port-exposure"] }
+testcontainers-modules = { version = "^0.15.0", default-features = false, optional = true }
+aws-credential-types = { version = "^1.2.14", optional = true }
+aws-config = { version = "1.8.15", optional = true, default-features = false, features = ["rt-tokio", "behavior-version-latest", "rustls"] }
+diesel = { version = "2.3.7", optional = true }
+diesel-async = { version = "0.8.0", optional = true }
+redis = { version = "^1.1.0", optional = true, default-features = false, features = ["tokio-comp", "connection-manager"] }
+bb8 = { version = "0.9.1", optional = true }
+
+[dev-dependencies]
+test-containers-util = { path = ".", features = ["moto"] }
+aws-credential-types = { version = "^1.2.14" }
+aws-config = { version = "1.8.15", default-features = false, features = ["rt-tokio", "behavior-version-latest", "rustls"] }
+testcontainers-modules = { version = "^0.15.0", features = ["postgres", "redis", "valkey"] }
+aws-sdk-sns = { version = "1.98.0", default-features = false, features = ["rt-tokio", "rustls"] }
+aws-sdk-sqs = { version = "1.97.0", default-features = false, features = ["rt-tokio", "rustls"] }
+tokio-postgres = "0.7.17"
+redis = { version = "^1.1.0", default-features = false, features = ["tokio-comp", "connection-manager"] }
+
+
+[features]
+postgres = [
+    "dep:testcontainers-modules",
+    "testcontainers-modules/postgres"
+]
+
+diesel = [
+    "dep:diesel",
+    "dep:diesel-async"
+]
+
+bb8 = [
+    "dep:bb8"
+]
+
+valkey = [
+    "dep:redis",
+    "dep:testcontainers-modules",
+    "testcontainers-modules/valkey"
+]
+
+redis = [
+    "dep:redis",
+    "dep:testcontainers-modules",
+    "testcontainers-modules/redis"
+]
+
+moto = [
+    "dep:testcontainers-modules",
+    "dep:aws-credential-types",
+    "dep:aws-config"
+]
+
+
+
+
