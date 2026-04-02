@@ -1,3 +1,4 @@
+#[cfg(any(test, feature = "pg-diesel"))]
 mod diesel_pg;
 
 #[cfg(any(test, feature = "moto"))]
@@ -22,6 +23,10 @@ mod valkey_container;
     all(feature = "redis", feature = "bb8")
 ))]
 mod valkey_redis_bb8;
+
+#[cfg(any(test, feature = "pg-diesel"))]
+mod rand;
+mod sqlx_pg;
 
 pub use options::Options;
 

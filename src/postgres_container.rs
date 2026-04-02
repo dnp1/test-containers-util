@@ -16,19 +16,17 @@ const PG_PORT: u16 = 5432;
 pub fn default_cmd() -> Vec<&'static str> {
     vec![
         "-c",
+        "max_connections=100",
+        "-c",
+        "shared_buffers=32MB",
+        "-c",
+        "work_mem=1MB",
+        "-c",
+        "maintenance_work_mem=8MB",
+        "-c",
         "fsync=off",
         "-c",
         "synchronous_commit=off",
-        "-c",
-        "shared_buffers=256MB",
-        "-c",
-        "work_mem=4MB",
-        "-c",
-        "maintenance_work_mem=128MB",
-        "-c",
-        "effective_cache_size=512MB",
-        "-c",
-        "max_connections=40",
     ]
 }
 
