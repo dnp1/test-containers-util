@@ -55,7 +55,7 @@ pub mod moto_container;
 pub mod postgres_container;
 
 
-#[cfg(any(test, feature = "moto", feature = "redis"))]
+#[cfg(any(test, feature = "redis"))]
 mod redis_container;
 #[cfg(any(test, feature = "valkey", feature = "redis"))]
 pub mod redis_valkey_connection_manager;
